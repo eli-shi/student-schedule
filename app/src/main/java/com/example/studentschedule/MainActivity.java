@@ -1,5 +1,6 @@
 package com.example.studentschedule;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import android.graphics.drawable.Drawable;
@@ -11,9 +12,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -32,12 +36,27 @@ public class MainActivity extends AppCompatActivity {
         EditText inputSurname = (EditText) findViewById(R.id.surnameInput);
         TextView outputSchedule = (TextView) findViewById(R.id.schedule);
 
-        String students = Utils.getJsonFromAssets(this, "Students.json");
-        Gson gson = new Gson();
-        Type listStudentType = new TypeToken<List<Student>>() {
-        }.getType();
-        List<Student> studentsList = gson.fromJson(students, listStudentType);
+        ArrayList<Student> studentsList = new ArrayList<Student>();
 
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("/student");
+        myRef.addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot dataSnapshot) {
+                                            studentsList.clear();
+                                            for (DataSnapshot item_snapshot : dataSnapshot.getChildren()) {
+                                                Student student = item_snapshot.getValue(Student.class);
+                                                studentsList.add(student);
+                                                Log.i("students", student.name);
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    }
+        );
 
 
         search.setOnClickListener(
@@ -67,26 +86,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String[] weekdays = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
-    private String beauty = weekdays[0] + " - ";
 
-    private String getFormattedSchedule(String[][] schedule, int rowIndex, int collumIndex) {
 
-        if (rowIndex > 4) return beauty;
+    private String beauty = new String();
 
-        beauty += schedule[rowIndex][collumIndex];
 
-        if (collumIndex == 4) {
-            rowIndex++;
-            collumIndex = 0;
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private String getFormattedSchedule(List<List<String>> schedule, int rowIndex, int collumIndex) {
 
-            if (rowIndex < 5) beauty += "\n" + weekdays[rowIndex] + " - ";
-        } else {
-            collumIndex++;
-            beauty += ", ";
+
+        for (rowIndex = 0; rowIndex < 5; rowIndex++) {
+            beauty = beauty + weekdays[rowIndex] + " - ";
+            for (collumIndex = 0; collumIndex < 5; collumIndex++) {
+                if (collumIndex != 4) {
+                    beauty = beauty + schedule.get(rowIndex).get(collumIndex) + ", ";
+                } else {
+                    beauty = beauty + schedule.get(rowIndex).get(collumIndex) + "\n";
+                }
+            }
         }
-
-        getFormattedSchedule(schedule, rowIndex, collumIndex);
-
         return beauty;
     }
 }

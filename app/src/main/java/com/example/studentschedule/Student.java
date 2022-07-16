@@ -1,11 +1,15 @@
 package com.example.studentschedule;
 
+import java.util.List;
+
+
 public class Student {
     String name;
     String surname;
-    String[][] schedule;
+    List<List<String>> schedule;
 
-    Student(String name, String surname, String[][] schedule) {
+    Student(){}
+    Student(String name, String surname, List<List<String>> schedule) {
         this.name = name;
         this.surname = surname;
         this.schedule = schedule;
@@ -27,11 +31,11 @@ public class Student {
         this.surname = surname;
     }
 
-    public String[][] getSchedule() {
+    public List<List<String>> getSchedule() {
         return schedule;
     }
 
-    public void setSchedule(String[][] schedule) {
+    public void setSchedule(List<List<String>> schedule) {
         this.schedule = schedule;
     }
 }
